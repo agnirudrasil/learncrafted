@@ -8,10 +8,9 @@ export const GoldButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
         return (
             <button
                 className={cn(
-                    "p-3 bg-gradient-to-b from-primary via-deepgold to-richgold rounded-md border-warning inline-flex items-center justify-center shadow-gold hover:-translate-y-0.5 transition active:translate-y-0 hover:shadow-goldhover active:shadow-goldactive",
+                    "p-3 bg-gradient-to-b from-primary via-deepgold to-richgold rounded-md border-warning inline-flex items-center justify-center shadow-gold hover:-translate-y-0.5 transition active:translate-y-0 hover:shadow-goldhover active:shadow-goldactive disabled:shadow-goldactive disabled:cursor-not-allowed disabled:translate-y-0",
                     className
                 )}
-                style={{}}
                 ref={ref}
                 {...props}
             />

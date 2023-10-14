@@ -9,6 +9,7 @@ class Users(BaseModel):
     name: str
     email: EmailStr
     bio: Optional[str]
+    avatar: Optional[str]
     user_type: int
     level: int
     coins: int

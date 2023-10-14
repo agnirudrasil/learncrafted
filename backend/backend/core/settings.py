@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     SQL_ALCHEMY_DATABASE_URI: PostgresDsn = 'postgresql://agnirudrasil@localhost:5432/learncrafted'
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 30  # 30 days
     API_V1_STR: str = '/api/v1'
+    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
 
 settings = Settings()

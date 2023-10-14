@@ -3,13 +3,29 @@ import { Navbar } from "@/components/navbar";
 import { AvatarImage, Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { User } from "@/models/user";
 
-export default function MainLayout({
+const USER_TYPE = ["Student", "Teacher"];
+
+export default async function MainLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    const cookie = cookies();
+    const user = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/@me`, {
+        credentials: "include",
+        method: "GET",
+        headers: {
+            ...headers,
+            Cookie: cookie.toString(),
+        },
+    })
+        .then((res) => res.json() as Promise<User>)
+        .catch(() => redirect("/login"));
+
     return (
         <div className="flex w-full h-full">
             <nav className="h-full p-2">
@@ -20,12 +36,17 @@ export default function MainLayout({
                     <h1 className="text-3xl font-display">My Timetable</h1>
                     <div className="flex gap-2 ml-auto p-4 bg-muted rounded-md items-center">
                         <Avatar className="w-10 h-10">
-                            <AvatarImage src="/photo.jpg" />
+                            <AvatarImage
+                                src={
+                                    user.avatar ??
+                                    `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${user.id}`
+                                }
+                            />
                         </Avatar>
                         <div className="flex flex-col">
-                            <span className="text-md">Agnirudra Sil</span>
+                            <span className="text-md">{user.name}</span>
                             <span className="text-muted-foreground text-xs font-semibold">
-                                Student | Level 2
+                                {USER_TYPE[user.user_type]} | Level {user.level}
                             </span>
                         </div>
                     </div>

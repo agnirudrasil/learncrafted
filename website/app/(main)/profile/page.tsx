@@ -16,6 +16,7 @@ const COLOURS = [
 ];
 
 export default async function ProfilePage() {
+    const user = {};
     return (
         <div className="flex gap-6 max-h-full overflow-hidden">
             <div className="flex flex-col gap-2 items-center">
