@@ -8,4 +8,6 @@ export interface User {
     level: number;
     xp: number;
     coins: number;
+    badges: { id: string; name: string; colour: string }[];
+    achievements: { id: string; name: string; colour: string }[];
 }

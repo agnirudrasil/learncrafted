@@ -54,3 +54,11 @@ def login(
 
     login_user(user.id, response)
     return {"message": "Login successful"}
+
+
+@router.post("/logout")
+def logout(
+        response: Response
+):
+    response.delete_cookie("jid")
+    return {"message": "Logout successful"}

@@ -10,6 +10,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useLogout } from "@/hooks/requests/useLogout";
 
 const LINKS = [
     {
@@ -32,6 +33,8 @@ const LINKS = [
 
 export const Navbar = () => {
     const pathname = usePathname();
+    const router = useRouter();
+    const { trigger, isMutating } = useLogout();
 
     return (
         <ul
@@ -58,6 +61,13 @@ export const Navbar = () => {
             ))}
             <li className="mt-auto">
                 <Button
+                    onClick={async () => {
+                        try {
+                            await trigger();
+                            router.push("/login");
+                        } catch (e) {}
+                    }}
+                    disabled={isMutating}
                     className="text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--muted))]"
                     variant="ghost"
                     size="icon"

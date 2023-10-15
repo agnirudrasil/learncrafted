@@ -1,11 +1,8 @@
-import { Logo } from "@/components/Logo";
 import { Navbar } from "@/components/navbar";
 import { AvatarImage, Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { User } from "@/models/user";
+import { makeRequest } from "@/lib/request";
 
 const USER_TYPE = ["Student", "Teacher"];
 
@@ -14,17 +11,13 @@ export default async function MainLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const cookie = cookies();
-    const user = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/@me`, {
-        credentials: "include",
-        method: "GET",
-        headers: {
-            ...headers,
-            Cookie: cookie.toString(),
+    const user = await makeRequest<User>(
+        `${process.env.NEXT_PUBLIC_API_URL}/users/@me`,
+        {
+            method: "GET",
         },
-    })
-        .then((res) => res.json() as Promise<User>)
-        .catch(() => redirect("/login"));
+        () => redirect("/login")
+    );
 
     return (
         <div className="flex w-full h-full">
@@ -35,7 +28,7 @@ export default async function MainLayout({
                 <header className="w-full flex items-center p-4">
                     <h1 className="text-3xl font-display">My Timetable</h1>
                     <div className="flex gap-2 ml-auto p-4 bg-muted rounded-md items-center">
-                        <Avatar className="w-10 h-10">
+                        <Avatar className="w-10 h-10 rounded-md">
                             <AvatarImage
                                 src={
                                     user.avatar ??
@@ -46,7 +39,8 @@ export default async function MainLayout({
                         <div className="flex flex-col">
                             <span className="text-md">{user.name}</span>
                             <span className="text-muted-foreground text-xs font-semibold">
-                                {USER_TYPE[user.user_type]} | Level {user.level}
+                                {USER_TYPE[user.user_type]} | Level {user.level}{" "}
+                                | {user.coins} Coins
                             </span>
                         </div>
                     </div>

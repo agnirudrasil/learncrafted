@@ -6,64 +6,57 @@ import {
     CardFooter,
     CardHeader,
 } from "@/components/ui/card";
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { TIMES } from "@/lib/times";
 import { cn } from "@/lib/utils";
+import { CreateReminder } from "./CreateReminder";
+import { makeRequest } from "@/lib/request";
+import { Event } from "@/models/event";
+import {
+    addDays,
+    format,
+    isEqual,
+    parse,
+    startOfWeek,
+    subMinutes,
+} from "date-fns";
+import { PickDate } from "./PickDate";
+import { CreateTimetableEvent } from "./CreateTimetableEvent";
 
-// 12 1 2 3 4 5 6 7 8 9 10 11
+export default async function TimetablePage({
+    searchParams,
+}: {
+    searchParams: { date?: string };
+}) {
+    const events = await makeRequest<Event[]>(
+        `${process.env.NEXT_PUBLIC_API_URL}/events?start=${startOfWeek(
+            new Date(searchParams["date"] ?? new Date())
+        ).toISOString()}`,
+        {
+            method: "GET",
+        },
+        () => ({} as never)
+    );
 
-const TIMES = [
-    "12 AM",
-    "12:30 AM",
-    "1 AM",
-    "1:30 AM",
-    "2 AM",
-    "2:30 AM",
-    "3 AM",
-    "3:30 AM",
-    "4 AM",
-    "4:30 AM",
-    "5 AM",
-    "5:30 AM",
-    "6 AM",
-    "6:30 AM",
-    "7 AM",
-    "7:30 AM",
-    "8 AM",
-    "8:30 AM",
-    "9 AM",
-    "9:30 AM",
-    "10 AM",
-    "10:30 AM",
-    "11 AM",
-    "11:30 AM",
-    "12 PM",
-    "12:30 PM",
-    "1 PM",
-    "1:30 PM",
-    "2 PM",
-    "2:30 PM",
-    "3 PM",
-    "3:30 PM",
-    "4 PM",
-    "4:30 PM",
-    "5 PM",
-    "5:30 PM",
-    "6 PM",
-    "6:30 PM",
-    "7 PM",
-    "7:30 PM",
-    "8 PM",
-    "8:30 PM",
-    "9 PM",
-    "9:30 PM",
-    "10 PM",
-    "10:30 PM",
-    "11 PM",
-    "11:30 PM",
-];
+    const now = new Date(searchParams["date"] ?? new Date());
 
-const INDICES: number[] = [1, 2, 4, 7];
+    const eventsByDay = events.reduce((acc, event) => {
+        const day = new Date(event.start).toDateString();
+        if (!acc[day]) {
+            acc[day] = [];
+        }
+        acc[day].push(event);
+        return acc;
+    }, {} as Record<string, Event[]>);
 
-export default async function TimetablePage() {
     return (
         <div className="flex h-full max-h-full overflow-y-hidden gap-4">
             <div className="grow">
@@ -72,31 +65,25 @@ export default async function TimetablePage() {
                     style={{
                         display: "grid",
                         gridTemplateColumns: "repeat(8, 1fr)",
-                        gridTemplateRows: "repeat(49, 150px)",
+                        gridTemplateRows: "repeat(49, 75px)",
                     }}
                 >
                     <div className="w-full h-full border border-t-0 border-l-0 bg-background sticky top-0"></div>
-                    {[
-                        "Monday",
-                        "Tuesday",
-                        "Wednesday",
-                        "Thursday",
-                        "Friday",
-                        "Saturday",
-                        "Sunday",
-                    ].map((day) => (
-                        <div
-                            key={day}
-                            className="w-full h-full border border-t-0 border-l-0 bg-background sticky top-0 flex justify-center"
-                        >
-                            <span
-                                className="text-center text-muted-foreground"
-                                key={day}
+                    {Array(7)
+                        .fill(0)
+                        .map((_, i) =>
+                            addDays(startOfWeek(now, { weekStartsOn: 1 }), i)
+                        )
+                        .map((day) => (
+                            <div
+                                key={day.toISOString()}
+                                className="w-full h-full border border-t-0 border-l-0 bg-background sticky top-0 flex justify-center"
                             >
-                                {day}
-                            </span>
-                        </div>
-                    ))}
+                                <span className="text-center text-muted-foreground">
+                                    {format(day, "d LLL")}
+                                </span>
+                            </div>
+                        ))}
                     {TIMES.map((time, i) => (
                         <div
                             className="border-r border-b text-muted-foreground text-xs"
@@ -110,23 +97,73 @@ export default async function TimetablePage() {
                     ))}
                     {Array(48 * 7)
                         .fill(0)
-                        .map((_, i) => (
-                            <div
-                                key={i}
-                                className={cn(
-                                    "w-full h-full border border-t-0 border-l-0",
-                                    INDICES.includes(i) && "bg-warning"
-                                )}
-                            ></div>
-                        ))}
+                        .map((_, i) => {
+                            const date = addDays(
+                                startOfWeek(now, {
+                                    weekStartsOn: 1,
+                                }),
+                                i % 7
+                            );
+
+                            const dateKey = date.toDateString();
+
+                            const time = subMinutes(
+                                parse(
+                                    TIMES[Math.floor(i / 7)],
+                                    "h:mm b",
+                                    new Date(date)
+                                ),
+                                330
+                            );
+
+                            const datetime = new Date(
+                                date.getFullYear(),
+                                date.getMonth(),
+                                date.getDate(),
+                                time.getHours(),
+                                time.getMinutes()
+                            );
+
+                            const event = eventsByDay[dateKey]?.find(
+                                (e) =>
+                                    format(new Date(e.start), "h:mm b") ===
+                                    TIMES[Math.floor(i / 7)]
+                            );
+
+                            return (
+                                <CreateTimetableEvent
+                                    datetime={datetime}
+                                    event={event}
+                                    key={i}
+                                />
+                            );
+                        })}
                 </div>
             </div>
+
             <Card className="h-full flex flex-col">
                 <CardHeader className="p-2">
-                    <Calendar />
+                    <PickDate />
                 </CardHeader>
                 <CardFooter className="w-full mt-auto p-2">
-                    <GoldButton className="w-full">Create Reminder</GoldButton>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <GoldButton className="w-full">
+                                Create Reminder
+                            </GoldButton>
+                        </DialogTrigger>
+                        <DialogContent className="md:w-max max-h-[500px] overflow-scroll p-0">
+                            <DialogHeader className="p-4">
+                                <DialogTitle>Create a reminder</DialogTitle>
+                                <DialogDescription>
+                                    Schedule important events and tasks.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="p-4">
+                                <CreateReminder />
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 </CardFooter>
             </Card>
         </div>

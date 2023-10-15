@@ -1,7 +1,23 @@
-from typing import Annotated, Optional
+from typing import Annotated, Optional, List
 
 from pydantic import BaseModel, ConfigDict, BeforeValidator, EmailStr
 from pydantic.v1.validators import str_validator
+
+
+class UserAchievement(BaseModel):
+    id: Annotated[str, BeforeValidator(str_validator)] = ""
+    name: str
+    colour: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserBadge(BaseModel):
+    id: Annotated[str, BeforeValidator(str_validator)] = ""
+    name: str
+    colour: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Users(BaseModel):
@@ -14,5 +30,7 @@ class Users(BaseModel):
     level: int
     coins: int
     xp: int
+    badges: List[UserBadge]
+    achievements: List[UserAchievement]
 
     model_config = ConfigDict(from_attributes=True)
